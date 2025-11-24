@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.00, minimum-scale=1.00">
+	<title>Foodle</title>
+	<style>
+		/* Reset some default styles ------------------------------------------------------ */
+		* {
+			box-sizing: inherit;
+			margin: 0;
+			padding: 0;
+		}
+		
+		html {
+			box-sizing: border-box;
+		}
+		
+		/* Fonts and Colours and Decoration ----------------------------------------------- */
+		:root {
+			color-scheme: light dark;
+			--primary-text-colour: light-dark(#333, #eee);
+			--secondary-text-colour: light-dark(black, white);
+			--primary-background-colour: light-dark(#dff6ff, #3b474b);
+			--secondary-background-colour: light-dark(#f9f9f9, #373d43);
+			--tertiary-background-colour: light-dark(#fefefe, #292929);
+			--header-background-colour: light-dark(white, #292929);
+			--shadow-colour: #0002;
+			--primary-border-colour: light-dark(#90b8be, #2c3e50);
+			--secondary-border-colour: light-dark(#ddd, #777);
+		}
+		body {
+			background-color: var(--primary-background-colour);
+			color: var(--primary-text-colour);
+			font-family: Arial, sans-serif;
+		}
+		
+		header {	
+			background-color: var(--header-background-colour, white);
+			border-bottom: 1px solid var(--primary-border-colour);
+			box-shadow: 0px 5px 5px var(--shadow-colour);
+			text-align: center;
+		}
+
+		a {
+			color: var(--secondary-text-colour);
+			text-decoration: none;
+		}
+		
+		input[type="text"] {
+			font-size: larger;
+			border: none;
+			border-radius: 5px;
+			box-shadow: #0002 2px 2px 5px;
+		}
+
+		h2 {
+			font-weight: normal;
+		}
+		
+		.ingredient-mini {
+			color: var(--secondary-text-colour);
+			border: 1px solid var(--primary-background-colour);
+			padding: 10px 2.5px;
+			margin: 2px auto
+		}
+		meal-item {
+			background-color: var(--tertiary-background-colour, #fefefe);
+			color: var(--secondary-text-colour);
+			border: 1px solid var(--secondary-border-colour);
+			border-radius: 5px;
+			box-shadow: 2px 2px 5px 0 #0002;
+		}	
+		.ingredient {
+			color: var(--secondary-text-colour);
+			border: 1px solid var(--secondary-border-colour);
+			border-radius: 5px;
+			box-shadow: #0002 2px 2px 5px;
+		}
+		.ingredient:hover {
+			transform: scale(1.02);
+			transition: transform 0.2s ease-in-out;
+		}
+
+		full-macro-information {
+			background-color: var(--secondary-background-colour);
+			border: 1px solid var(--secondary-border-colour);
+			border-radius: 5px;
+		}
+		ingredient-mini-macros {
+			align-items: center;
+			font-size: 0.9em;
+			color: var(--secondary-text-colour);
+		}
+		ingredient-mini-macros p {
+			text-align: center;
+		}
+
+		/* Structure and Sizing ----------------------------------------------------------- */
+		body {
+			min-width: 660px;
+		}
+		.ingredient {
+			display: block;
+			background-repeat: no-repeat;
+			background-size: cover;
+		}
+
+		header {
+			padding: 10px;
+		}
+
+		main {
+			display: flex;
+			justify-content: center;
+			width: 90%;
+			margin: auto;
+		}
+
+		input[type="text"] {
+			margin: 20px auto;
+			display: block;
+			padding: 5px;
+			width: 50%;
+		}
+
+		ingredient-list, meal-items {
+			padding: 20px;
+			display: block;
+			margin: 10px auto;
+			width: 90%;
+			max-width: 800px;
+		}
+
+		.ingredient {
+			width: 95%;
+			min-width: 250px;
+			padding: 10px;
+			margin: 20px auto;
+		}
+
+		.ingredient-mini {
+			width: 100%;
+			display: block;
+		}
+		select {
+			width: 145px;
+			margin: 10px auto 0 auto;
+			background: none;
+			border: none;
+			font-size: 1.5rem;
+			text-align: center;
+			display: none
+		}
+		ingredient-mini-macros {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+		}
+
+		ingredient-mini-macros hr {
+			height: 10px
+		}
+
+		meal-item {
+			display: block;
+			width: 95%;
+			min-width: 500px;
+			padding: 10px;
+			margin: 20px auto;
+		}
+		
+		full-macro-information {
+			display: flex;
+			text-align: center;
+			flex-direction: row;
+			justify-content: space-around;
+			margin-top: 10px;
+			padding: 10px;
+		}
+
+		ingredient-mini-macros p {
+			display: block;
+			width: 20%;
+		}
+
+		@media screen and (max-width: 1100px) {
+			main {
+				width: 95%;
+				flex-direction: column;
+			}
+			h2 {
+				display: none;
+			}
+			meal-items, ingredient-list {
+				margin: 0 auto;
+				padding: 10px 20px;
+			}
+			select {
+				display: block;
+			}
+			select:has(> option[value="meals"]:checked) ~ ingredient-list,
+			select:has(> option[value="ingredients"]:checked) ~ meal-items {
+				display: none;
+			}
+			hr {
+				display: none;
+			}
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<h1>Foodle</h1>
+	</header>
+	<input type="text" name="search" id="search" placeholder="Search for meals or ingredients..."
+		oninput="filterBySearch(this.value);" />
+	<main>
+		<select name="meals-or-ingredient-select" id="meals-or-ingredient-select">
+			<option value="meals">Meals</option>
+			<option value="ingredients">Ingredients</option>
+		</select>
+		<meal-items class="meals-ingredients-container"></meal-items>
+		<ingredient-list class="meals-ingredients-container"></ingredient-list>
+	</main>
+
+	<script>
+		/** Class representing an ingredient with its nutritional values. */
+		class Ingredient {
+			/**
+			 * Constructor for the Ingredient class.
+			 * @param {string} name - The name of the ingredient.
+			 * @param {number} caloriesPer100g - Calories per 100 grams.
+			 * @param {number} fatPer100g - Fat content per 100 grams.
+			 * @param {number} carbsPer100g - Carbohydrates per 100 grams.
+			 * @param {number} proteinPer100g - Protein content per 100 grams.
+			 * @param {number} fibrePer100g - Fibre content per 100 grams.
+			 * @param {string} link - URL link to more information about the ingredient.
+			 * @param {string} image - URL link to an image of the ingredient.
+			 */
+			constructor(name, caloriesPer100g, fatPer100g, carbsPer100g, proteinPer100g, fibrePer100g, link, image) {
+				// Type error handling for name and nutritional values
+				if (typeof name !== 'string' || name.trim() === '')              throw new TypeError("name must be a non-empty string");
+				if (typeof caloriesPer100g !== 'number' || caloriesPer100g <= 0) throw new TypeError("caloriesPer100g must be a positive number");
+				if (typeof fatPer100g !== 'number' || fatPer100g < 0)            throw new TypeError("fatPer100g must be a non-negative number");
+				if (typeof carbsPer100g !== 'number' || carbsPer100g < 0)        throw new TypeError("carbsPer100g must be a non-negative number");
+				if (typeof proteinPer100g !== 'number' || proteinPer100g < 0)    throw new TypeError("proteinPer100g must be a non-negative number");
+				if (typeof fibrePer100g !== 'number' || fibrePer100g < 0)        throw new TypeError("fibrePer100g must be a non-negative number");
+				if (typeof link !== 'string' || !link.startsWith('http'))        throw new TypeError("link must be a valid URL string");
+				if (typeof image !== 'string' || !image.startsWith('http'))      throw new TypeError("image must be a valid URL string");
+
+				// Assign the properties.
+				this.name            = name;
+				this.caloriesPer100g = caloriesPer100g;
+				this.fatPer100g      = fatPer100g;
+				this.carbsPer100g    = carbsPer100g;
+				this.proteinPer100g  = proteinPer100g;
+				this.fibrePer100g    = fibrePer100g;
+				this.link            = link;
+				this.image           = image;
+			}
+		}
+
+		/** Class representing a specific amount of an ingredient. */
+		class IngredientAmount {
+			/**
+			 * Constructor for the IngredientAmount class.
+			 * @param {Ingredient} ingredient - An instance of the Ingredient class.
+			 * @param {number} grams - The amount of the ingredient in grams.
+			 */
+			constructor(ingredient, grams) {
+				if (!(ingredient instanceof Ingredient))     throw new TypeError("ingredient must be an instance of Ingredient");
+				if (typeof grams !== 'number' || grams <= 0) throw new TypeError("grams must be a positive number");
+
+				this.ingredient = ingredient;
+				this.grams      = grams;
+			}
+			get calories() {return (this.ingredient.caloriesPer100g / 100) * this.grams;}
+			get fat() {return (this.ingredient.fatPer100g / 100) * this.grams;}
+			get carbs() {return (this.ingredient.carbsPer100g / 100) * this.grams;}
+			get protein() {return (this.ingredient.proteinPer100g / 100) * this.grams;}
+			get fibre() {return (this.ingredient.fibrePer100g / 100) * this.grams;}
+		}
+
+		/** Class representing a meal composed of multiple ingredients. */
+		class Meal {
+			/**
+			 * Constructor for the Meal class.
+			 * @param {string} name - The name of the meal.
+			 * @param {IngredientAmount[]} ingredients - An array of IngredientAmount instances
+			 *     representing the quantity of which ingredients in the meal.
+			 */
+			constructor(name, ...ingredients) {
+				// Type error handling for name and ingredients
+				if (typeof name !== 'string' || name.trim() === '')             throw new TypeError("name must be a non-empty string");
+				if (!Array.isArray(ingredients) || ingredients.length === 0)    throw new TypeError("ingredients must be a non-empty array");
+				if (!ingredients.every(ing => ing instanceof IngredientAmount)) throw new TypeError("All items in ingredients must be instances of IngredientAmount");
+
+				this.name        = name;
+				this.ingredients = ingredients;
+			}
+		}
+		// Per 3000kcal | Fat 58.08g --> 77.44g | Carbohydrates 355.76g --> 399.32g | Protein 220g
+		// Per 1000kcal | Fat 19.36g --> 25.81g | Carbohydrates 118.59g --> 133.11g | Protein 73.33g
+		// Per 500kcal  | Fat 9.68g  --> 12.91g | Carbohydrates 59.29g  --> 66.55g  | Protein 36.67g
+
+		/**
+		 * This object contains a collection of ingredients with their nutritional values.
+		 * We use a key value pair structure instead of an array as it is easier to read
+		 * when creating meals.
+		 * 
+		 * @const {Object.<string, Ingredient>} INGREDIENTS
+		 */
+		const INGREDIENTS = Object.fromEntries(Object.entries({//                              kcal fat   carbs protn fibre
+			"Almonds":                        new Ingredient("Almonds",                        633, 55.8, 6.9,  21.1, 9.5,  "https://www.tesco.com/groceries/products/271074330",                                             "https://cdn.britannica.com/04/194904-050-1B92812A/Raw-Food-Almond-food-Nut-Snack.jpg"),
+			"Avocado":                        new Ingredient("Avocado",                        198, 19.5, 1.9,  1.9,  3.4,  "https://www.tesco.com/groceries/products/265299361",                                             "https://www.soulflower.in/cdn/shop/articles/avocado-1_335cdafd-3f2d-4de4-a016-37f8476e6ecf.jpg"),
+			"Banana":                         new Ingredient("Banana",                         89,  0.1,  20.3, 1.2,  1.4,  "https://www.tesco.com/groceries/products/275280804",                                             "https://hips.hearstapps.com/hmg-prod/images/ripe-yellow-bananas-at-the-shopping-market-fruits-royalty-free-image-1712833209.jpg?resize=1200:*"),
+			"Blueberries":                    new Ingredient("Blueberries",                    45,  0.2,  9.1,  0.9,  1.5,  "https://www.tesco.com/groceries/products/292248675",                                             "https://dam.hollandandbarrettimages.co.uk/default/_raw/a244aa8c-43ac-4335-ac7a-7bc159156489/blueberries-hero.png"),
+			"Branflakes":                     new Ingredient("Branflakes",                     358, 2.2,  65,   11,   17,   "https://www.tesco.com/groceries/products/254852570",                                             "https://thumbs.dreamstime.com/b/spelt-flakes-isolated-dry-raw-rolled-flat-oat-grains-wheat-oatmeal-bran-barley-rye-cereals-texture-background-pattern-banner-378982873.jpg"),
+			"Bread - Granary":                new Ingredient("Bread - Granary",                236, 2.4,  39.8, 10.6, 6.8,  "https://www.tesco.com/groceries/products/254944133",                                             "https://www.agaliving.com/sites/default/files/styles/recipe_image/public/2019-01/Wholemeal%20Rosemary%20and%20Chives%20Bread%20Normal.jpg.webp"),	
+			"Chia Seeds":                     new Ingredient("Chia Seeds",                     422, 27.7, 2.4,  23.9, 33.8, "https://www.tesco.com/groceries/products/311792248",                                             "https://www.drweil.com/wp-content/uploads/2018/05/Can-Chia-Help-With-Weight-Loss_-531657339.jpg"),
+			"Couscous":                       new Ingredient("Couscous",                       112, 0.2,  23.2, 3.8,  1.4,  "https://www.tesco.com/groceries/products/254944133",                                             "https://images.themodernproper.com/production/posts/2019/PerfectCuscous_3.jpg?w=960&h=540&q=82&fm=jpg&fit=crop&dm=1742339021&s=15e2e03b99ee426342a62995b29b4384"),
+			"Eggs":                           new Ingredient("Eggs",                           131, 9,    0.4,  12.6, 0,    "https://www.tesco.com/groceries/products/301810088",                                             "https://res.cloudinary.com/studentsamskipnaden-i-s-r-st-norge/image/upload/c_lfill,g_auto,w_1200,f_auto/f_auto/q_auto/v1698313498/Mat%20og%20drikke/Oppskrifter/egg-71577018_syu3z8.jpg"),
+			"Egg Whites":                     new Ingredient("Egg Whites",                     48,  0,    0,    10.9, 0,    "https://www.tesco.com/groceries/products/266552250",                                             "https://images.kosher.com/article_view/e/g/egg_white_tutorial_banner.jpg"),	
+			"Flaxseed":                       new Ingredient("Flaxseed",                       534, 42.2, 28.9, 18.3, 27.3, "https://www.tesco.com/groceries/products/254944133",                                             "https://www.glanbianutritionals.com/sites/default/files/styles/hero_wide/public/field/hero/flaxseeds_0.jpg?itok=pTxRIwTK"),
+			"Grapes - Green":                 new Ingredient("Grapes - Green",                 67,  0.2,  15.2, 0.7,  0.7,  "https://www.tesco.com/groceries/products/314934215",                                             "https://specialtyproduce.com/sppics/7144.png"),	
+			"Greek Yoghurt - 0% Fat":         new Ingredient("Greek Yoghurt - 0% Fat",         57,  0.4,  3.5,  10,   0,    "https://www.tesco.com/groceries/products/305986397",                                             "https://www.simplyrecipes.com/thmb/pEW30kDnp62JDYj7ULFVfGZCysw=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/Simply-Recipes-GreekYogurt-LEAD-5-800a5f70732348c0a9c0a5196bd1d809.jpg"),
+			"Jam - Strawberry":               new Ingredient("Jam - Strawberry",               254, 0.3,  62,   0.3,  0.9,  "https://www.tesco.com/groceries/products/301323296",                                             "https://digitalcontent.api.tesco.com/v2/media/ghs/a240f68a-c7c8-4d62-9c08-a931cdb32bc7/a2259b2b-84e2-45af-be21-9dc80fecb3de_1317334704.jpeg"),
+			"Peanut Butter - Smooth":         new Ingredient("Peanut Butter - Smooth",         645, 54.5, 9.2,  26.3, 6.5,  "https://www.tesco.com/groceries/products/294224350",                                             "https://perfectsnacks.com/cdn/shop/articles/shutterstock_1550625911.jpg?v=1717833130"),
+			"Protein Pancakes":               new Ingredient("Protein Pancakes",               339, 3.4,  43,   33,   1.9,  "https://www.theproteinworks.com/protein-pancake-mix",                                            "https://img.theproteinworks.com/v7/_media/catalog/product/cache/d37e42c448b3dbec3a8a7ecf127990cd/l/o/loaded_protein_pancakes-pdp_3_15.png"),
+			"Protein Pancakes - Diet":        new Ingredient("Protein Pancakes - Diet",        341, 3.2,  38,   36,   6.5,  "https://www.theproteinworks.com/diet-protein-pancake",                                           "https://img.theproteinworks.com/v7/_media/catalog/product/cache/d37e42c448b3dbec3a8a7ecf127990cd/d/i/diet_protein_pancakes__pdp-2_1.png"),
+			"Protein Pancakes - Vegan":       new Ingredient("Protein Pancakes - Vegan",       337, 2.6,  53,   24,   4,    "https://www.theproteinworks.com/vegan-protein-pancake-mix",                                      "https://img.theproteinworks.com/v7/_cms/Products/Vegan_Protein_Pancake_Mix/Vegan_Protein_Pancakes_PDP_4_d2bcf2e4b0.png"),
+			"Protein Porridge":               new Ingredient("Protein Porridge",               361, 4.8,  59,   24,   7.5,  "https://www.theproteinworks.com/vegan-protein-porridge-360",                                     "https://img.theproteinworks.com/v7/_cms/Products/Vegan_Protein_Porridge_360/Image_PDP_2_06057ca6de.png"),
+			"Rice - Long Grain":              new Ingredient("Rice - Long Grain",              137, 0.6,  29,   3,    1.7,  "https://www.tesco.com/groceries/products/254877356",                                             "https://www.realsimple.com/thmb/uVGcBOpcOJBCEbs4WRx8fmeoFxM=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/507936866_6136178378001_6129561006001-vs-03eda158973046dcbab360b0a1644f71.jpg"),
+			"Strawberries":                   new Ingredient("Strawberries",                   33,  0.5,  6.1,  1,    0.6,  "https://www.tesco.com/groceries/products/292226511",                                             "https://www.gardentech.com/-/media/project/oneweb/gardentech/images/blog/how-to-grow-your-own-tasty-strawberries/strawberries-header-og.jpg"),
+			"Tuno - Spring Water":            new Ingredient("Tuno - Spring Water",            55,  0.5,  0.1,  11,   0,    "https://groceries.asda.com/product/vegan-fish/loma-linda-spring-water-tuno-142-g/1000218525298", "https://m.media-amazon.com/images/S/aplus-media/vc/c5a541eb-4bc9-4202-9afa-f3bf6f191c64._CR0,0,970,300_PT0_SX970__.jpg"),
+			"What the Cluck - Vegan Chicken": new Ingredient("What the Cluck - Vegan Chicken", 130, 3.4,  1.8,  20,   7.2,  "https://www.tesco.com/groceries/products/320673595",                                             "https://digitalcontent.api.tesco.com/v2/media/ghs/99f7937e-04b5-4a1d-9b9b-3fd846030133/e2f57405-b769-4e80-9f68-25b24a6c993e.jpeg"),
+			"Whey - Isolate 90":              new Ingredient("Whey - Isolate 90",              365, 0.6,  4,    86,   0.2,  "https://www.theproteinworks.com/whey-protein-90-isolate-january",                                "https://img.theproteinworks.com/v7/_cms/Products/Diet_Whey_Isolate_90/PDP_5_c02b154378.png"),
+			"Whipped Cream - Spray":          new Ingredient("Whipped Cream - Spray",          203, 16,   15,   0,    0,    "https://www.tesco.com/groceries/products/302296694",                                             "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqlqP2owpqu3GeC3xy4_8SF86usALh3dGwFQ&s"),
+		}).sort(([a],[b]) => a.localeCompare(b))); // This arranges them in alphabetical order.
+
+		/** @const {Meal[]} MEALS A collection of all meals in the application. */
+		const MEALS = [
+			new Meal("Eggs on Toast", 
+				new IngredientAmount(INGREDIENTS["Bread - Granary"], 44 * 3 /* 3 Slices */),
+				new IngredientAmount(INGREDIENTS["Eggs"], 54 * 2 /* 2 Eggs */), 
+				new IngredientAmount(INGREDIENTS["Egg Whites"], 100), 
+			),
+			new Meal("Greek Yoghurt with Grapes and Branflakes", 
+				new IngredientAmount(INGREDIENTS["Greek Yoghurt - 0% Fat"], 300), 
+				new IngredientAmount(INGREDIENTS["Grapes - Green"], 100), 
+				new IngredientAmount(INGREDIENTS["Branflakes"], 53), 
+				new IngredientAmount(INGREDIENTS["Almonds"], 12), 
+			),
+			new Meal("Greek Yoghurt with Blueberries and Branflakes", 
+				new IngredientAmount(INGREDIENTS["Greek Yoghurt - 0% Fat"], 300), 
+				new IngredientAmount(INGREDIENTS["Blueberries"], 150), 
+				new IngredientAmount(INGREDIENTS["Branflakes"], 53), 
+				new IngredientAmount(INGREDIENTS["Almonds"], 12), 
+			),
+			new Meal("Greek Yoghurt with Strawberries and Branflakes", 
+				new IngredientAmount(INGREDIENTS["Greek Yoghurt - 0% Fat"], 300), 
+				new IngredientAmount(INGREDIENTS["Strawberries"], 113), 
+				new IngredientAmount(INGREDIENTS["Branflakes"], 60), 
+				new IngredientAmount(INGREDIENTS["Almonds"], 12), 
+			),
+			new Meal("Protein Porridge with Whey and Seeds", 
+				new IngredientAmount(INGREDIENTS["Protein Porridge"], 103), 
+				new IngredientAmount(INGREDIENTS["Whey - Isolate 90"], 14), 
+				new IngredientAmount(INGREDIENTS["Chia Seeds"], 9), 
+				new IngredientAmount(INGREDIENTS["Flaxseed"], 7), 
+			),
+			new Meal("Rice, Vegan Tuna, and Avocado", 
+				new IngredientAmount(INGREDIENTS["Rice - Long Grain"], 180), 
+				new IngredientAmount(INGREDIENTS["Tuno - Spring Water"], 284), 
+				new IngredientAmount(INGREDIENTS["Avocado"], 78/2 /* Half an Avocado */), 
+			),
+			new Meal("Rice, Vegan Chicken, and Avocado", 
+				new IngredientAmount(INGREDIENTS["Rice - Long Grain"], 180), 
+				new IngredientAmount(INGREDIENTS["What the Cluck - Vegan Chicken"], 160), 
+				new IngredientAmount(INGREDIENTS["Avocado"], 78/3 /* Quarter of an Avocado */), 
+			),
+			new Meal("Protein Pancakes", 
+				new IngredientAmount(INGREDIENTS["Protein Pancakes - Diet"], 100),
+				new IngredientAmount(INGREDIENTS["Jam - Strawberry"], 30),
+				new IngredientAmount(INGREDIENTS["Whipped Cream - Spray"], 34),
+				new IngredientAmount(INGREDIENTS["Blueberries"], 50	)
+			),
+		]
+
+		/**
+		 * Initialse the custom HTML elements and their containers.
+		 * The elements are <meal-items> and <ingredient-list>, <meal-item>, and <ingredient-item>.
+		 * @returns {void} Generates custom elements, does not return anything.
+		 */
+		function initCustomElements() {
+			/** @var {string} ingredientList Dynamically generated ingredient list HTML.*/
+			let ingredientList = '<h2 style="text-align: center;">Ingredients Per 100g</h2>';
+
+			for (const ingredientName in INGREDIENTS) {
+				const ingredient = INGREDIENTS[ingredientName];
+				ingredientList += `
+					<ingredient-item
+						id="ingredient-${ingredient.name.replace(/\s+/g, '-').toLowerCase()}"
+						class="ingredient"
+						style="background: linear-gradient(light-dark(#fff9, #2229), light-dark(#fff9, #2229)), url('${ingredient.image}') left top / cover no-repeat;"
+						onclick="filterByIngredient(this);"
+						data-ingredient-name="${ingredient.name}"
+						data-is-filtered="false">
+						<h3 target="_blank">${ingredient.name}</h3>
+						<p><b>Calories:</b> ${ingredient.caloriesPer100g}kcal</p>
+						<p><b>Fat:</b> ${ingredient.fatPer100g}g</p>
+						<p><b>Carbs:</b> ${ingredient.carbsPer100g}g</p>
+						<p><b>Protein:</b> ${ingredient.proteinPer100g}g</p>
+						<p><b>Fibre:</b> ${ingredient.fibrePer100g}g</p>
+					</ingredient-item>`;
+			}
+
+			/** @var {string} mealItems Dynamically generated meal items HTML. */
+			let mealItems = '<h2 style="text-align: center;">Meals</h2>';
+
+			MEALS.forEach(meal => {
+				mealItems += `<meal-item id="${meal.name.replace(/\s+/g, '-').toLowerCase()}" data-ingredients="${meal.ingredients.map(ing => ing.ingredient.name).join(', ')}">
+								<h3 style="text-align: center;">${meal.name}</h3>
+								<full-macro-information>
+									<b>Calories:</b> ${Math.round(meal.ingredients.reduce((sum, ing) => sum + ing.calories, 0))}kcal
+									<hr />
+									<b>Fat:</b> ${Math.round(meal.ingredients.reduce((sum, ing) => sum + ing.fat, 0))}g
+									<hr />
+									<b>Carbs:</b> ${Math.round(meal.ingredients.reduce((sum, ing) => sum + ing.carbs, 0))}g
+									<hr />
+									<b>Protein:</b> ${Math.round(meal.ingredients.reduce((sum, ing) => sum + ing.protein, 0))}g
+									<hr />
+									<b>Fibre:</b> ${Math.round(meal.ingredients.reduce((sum, ing) => sum + ing.fibre, 0))}g
+								</full-macro-information>
+								<div style="margin: 10px auto;">
+									${meal.ingredients.map(ing => `
+										<a class="ingredient-mini" style="background: linear-gradient(light-dark(#fff9, #2229), light-dark(#fff9, #2229)), url('${ing.ingredient.image}') left top / cover no-repeat;" href="${ing.ingredient.link}" target="_blank">
+											<p><b>${ing.grams}g of ${ing.ingredient.name}</b></p>
+											<ingredient-mini-macros>
+												<p><b>${Math.round(ing.calories)}kcal</b></p>
+												<hr />
+												<p><b>Fat:</b> ${Math.round(ing.fat)}g</p>
+												<hr />
+												<p><b>Carbs:</b> ${Math.round(ing.carbs)}g</p>
+												<hr />
+												<p><b>Protein:</b> ${Math.round(ing.protein)}g</p>
+												<hr>
+												<p><b>Fibre:</b> ${Math.round(ing.fibre)}g</p>
+											</ingredient-mini-macros>
+										</a>`).join('')}
+								</div>
+							 </meal-item>`;
+			});
+
+			/** @const {Object.<string, string>} CUSTOM_HTML Mapping of custom element tags and content. */
+			const CUSTOM_HTML = {'meal-items': mealItems, 'ingredient-list': ingredientList};
+			
+			// Create the custom container elements.
+			for (const tagName in CUSTOM_HTML) {
+				if (customElements.get(tagName)) continue;
+				customElements.define(tagName, class extends HTMLElement {
+					constructor() {
+						super();
+						this.innerHTML = CUSTOM_HTML[tagName];
+					}
+				});
+			}
+
+			/**
+			 * Numerous filters that can be applied to meal-item and ingredient-item elements.
+			 * When one is set to true then the element will be hidden. All must be false to be visible.
+			 * These are not attributes and just state why an element is being filtered.
+			 * @const {Object.<string, boolean>} FILTERS
+			 */
+			const FILTERS = {
+				search: false,
+				ingredientFilter: false,
+			};
+
+			// Create the meal-item and ingredient-item elements.
+			['meal-item', 'ingredient-item'].forEach(element => {
+				if (customElements.get(element)) return;
+				customElements.define(element, class extends HTMLElement {
+					constructor() {
+						super();
+						this.filters = {...FILTERS}; // Prevent passing by reference.
+					}
+				});
+			});
+		}
+
+		/**
+		 * Removes any ingredient from the document not used in any meal item.
+		 * @returns {void}
+		 */
+		function removeUnusedIngredients() {
+			/** @const {Element[]} INGREDIENTS - All ingredient-item elements in the document. */
+			const INGREDIENTS = Array.from(document.getElementsByTagName('ingredient-item'));
+			/** @const {Element[]} MEALS All meal items to check which ingredients used. */
+			const MEALS = Array.from(document.getElementsByTagName('meal-item'));
+
+			// Iterate over each ingredient to check if it is used in any meal. Remove if unused.
+			INGREDIENTS.forEach(ingredient => {
+				/** @const {string} INGREDIENT_NAME The ingredient name to check for usage. */
+				const INGREDIENT_NAME = ingredient.dataset.ingredientName;
+
+				// Remove the ingredient item if not in use in a meal.
+				if (!MEALS.some(meal => meal.dataset.ingredients.includes(INGREDIENT_NAME))) ingredient.remove();
+			});
+		}
+
+		/**
+		 * Updates the visibility of all meal-item and ingredient-item elements
+		 * based on their filter states.
+		 * @returns {void}
+		 */
+		function updateVisibilityOfElements() {
+			/** @const {Element[]} ALL_ELEMENTS All meal-item and ingredient-item elements in the document. */
+			const ALL_ELEMENTS = [...document.querySelectorAll('meal-item, ingredient-item')];
+
+			// Iterate over all elements and update their display based on their filters.
+			ALL_ELEMENTS.forEach(element =>
+				element.style.display = Object.values(element.filters).some(f => f) ? 'none' : null);
+		}
+
+		/**
+		 * Filters meals by the clicked ingredient and updates the list. Updates the DOM accordingly.
+		 * @param {HTMLElement} ingredient The selected ingredient element.
+		 * @returns {void}
+		 */
+		function filterByIngredient(ingredient) {
+			// Guarantee the type safety of the `ingredient` parameter.
+			if (ingredient instanceof HTMLElement === false) throw new TypeError("`ingredient` must be an HTMLElement.");
+			if (ingredient.tagName.toLowerCase() !== 'ingredient-item') {
+				throw new TypeError("`ingredient` must be an <ingredient-item> element.");
+			}
+
+			/** @var {boolean} isFiltered Get if the ingredient is already being filtered. */
+			let isFiltered = ingredient.dataset.isFiltered === 'true';
+
+			/* Toggle the filters state in the variable and the dataset.
+				Visually show this change in the DOM. */
+			isFiltered = !isFiltered;
+			ingredient.dataset.isFiltered = isFiltered + '';
+			ingredient.style.border = isFiltered ? '3px solid #0f0' : null;
+
+			/** @const {HTMLElement[]} MEAL_ITEMS All meal-item elements in the document. */
+			const MEAL_ITEMS = [...document.querySelectorAll('meal-item')];
+
+			MEAL_ITEMS.filter(mealItem => {
+				/** @const {string[]} FILTERED_INGREDIENT_KEYS The names of all currently filtered ingredients. */
+				const FILTERED_INGREDIENT_KEYS = Array.from(document.querySelectorAll('ingredient-item'))
+					.filter(ing => ing.dataset.isFiltered === 'true')
+					.map(ing => ing.dataset.ingredientName);
+
+				/* Empty arrays will return true from the `.every` method
+				   so we handle this premptively. */
+				if (FILTERED_INGREDIENT_KEYS.length === 0) {
+					mealItem.filters.ingredientFilter = false;
+				}
+				else {
+					/** @const {boolean} FILTER_RESULT Whether the meal contains filtered ingredients. */
+					const FILTER_RESULT = !FILTERED_INGREDIENT_KEYS.every(ingredient =>
+						mealItem.dataset.ingredients.includes(ingredient));
+					
+					mealItem.filters.ingredientFilter = FILTER_RESULT;
+				}
+			});
+
+			updateVisibilityOfElements();
+		}
+
+		/**
+		 * Filters meals and ingredients by a search term.
+		 * @param {string} searchTerm The term to match.
+		 * @return {void} Modifies DOM, doesn't return anything.
+		 */
+		function filterBySearch(searchTerm) {
+			// Guarantee the type safety of the `searchTerm` parameter.
+			if (typeof searchTerm !== 'string') throw new TypeError("searchTerm must be a string");
+
+			/**
+			 * Generate a case insensitive regex pattern from the search term.
+			 * @const {RegExp} REGEX
+			 * @example `new RegExp("Egg Whites")` = /Egg|Whites/i
+			 */
+			const REGEX = new RegExp(searchTerm.trim().replace(/\s+/g, ' ').replace(' ', '|'), 'i');
+
+			[...document.querySelectorAll('meal-item, ingredient-item')].forEach(element => {
+				/** @const {string} CONTENT Lowercase text content with select words filtered out. */
+				const CONTENT = element.textContent.toLowerCase().replace(/(\dkcal|\dg|\dgram|of|[\s:-])/, '');
+
+				// Update the search filter based on whether the content matches the REGEX.
+				element.filters.search = !CONTENT.match(REGEX);
+			})
+
+			updateVisibilityOfElements();
+		}
+
+		// Event listener to initialize custom elements when the DOM is fully loaded.
+		document.addEventListener('DOMContentLoaded', () => {
+			initCustomElements();
+			removeUnusedIngredients();
+		});
+	</script>
+</body>
+</html>
